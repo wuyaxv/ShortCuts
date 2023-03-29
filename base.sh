@@ -1,41 +1,45 @@
 #!/bin/bash
 
 AUTH_PASSWD=""
+ARSENAL="${HOME}/Arsenal"
 
 function init_seq {
-    if $(whoami) = "root";
+    if [ $(whoami) = "root" ]
     then
         echo "You shouldn't execute the script with the root privilege"
         echo "Exiting now..."
         exit -1
     fi
 
-    read -p "Authentication Required(User must be in sudoers list): " -r AUTH_PASSWD
-    
+    read -s -p "Authentication Required(User must be in sudoers list): " -r AUTH_PASSWD
 }
 
 function base {
-    sudo apt update && sudo apt -y upgrade 
+    echo -n $AUTH_PASSWD | sudo -S -p "" \
+        apt update && sudo apt -y upgrade 
 }
 
 function change_apt_srcs {
-    sed -i.backup -r 's/(deb|security)\.debian\.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+    echo -n $AUTH_PASSWD | sudo -S -p "" \
+        sed -i.backup -r 's/(deb|security)\.debian\.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
 }
 
 function install_base_tools {
-    apt install -y  vim-gtk3 \
+    echo -n $AUTH_PASSWD | sudo -S -p "" \
+        apt install -y  vim-gtk3 \
                     tmux \
                     git \
                     openssh-server \
                     openssl-dev
                     python3-pip \
                     curl \
-                    wget \
+                    wget 
 }
 
 
 function deploy_bin_analy_env {
-    apt install -y  binutils \
+    echo -n $AUTH_PASSWD | sudo -S -p "" \
+        apt install -y  binutils \
                     gcc-multilib \
                     gdb \
                     openjdk-17-jdk \
@@ -44,4 +48,19 @@ function deploy_bin_analy_env {
                     m4 \
                     cmake \
                     patchelf \
+                    jq 
+
+    # Get gef(GDB Enhanced Features)
+    bash -c "$(curl -fsSL https://gef.blah.cat/sh)"
+
+    # Get the latest Ghidra.
+    GHIDRA_LATEST_DOWNLOAD_URL=$(curl -sL https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest  | jq '.assets[] | .browser_download_url' | tr -d \" )
+
+    mkdir -p ${ARSENAL} && \
+        curl -fsSL -o ${ARSENAL}/ghidra_latest.zip ${GHIDRA_LATEST_DOWNLOAD_URL}  && \
+        unzip ghidra_latest.zip && \
+        rm ghidra_latest.zip
 }
+
+init_seq && deploy_bin_analy_env
+
