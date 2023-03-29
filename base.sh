@@ -58,9 +58,7 @@ function deploy_bin_analy_env {
 
     mkdir -p ${ARSENAL} && \
         curl -fsSL -o ${ARSENAL}/ghidra_latest.zip ${GHIDRA_LATEST_DOWNLOAD_URL}  && \
-        unzip ghidra_latest.zip && \
-        rm ghidra_latest.zip
+        unzip ${ARSENAL}/ghidra_latest.zip && \
+        rm ${ARSENAL}/ghidra_latest.zip
 }
-
-init_seq && deploy_bin_analy_env
 
